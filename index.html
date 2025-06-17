@@ -18,6 +18,7 @@
       max-width: 300px;
       max-height: 90vh;
       overflow-y: auto;
+      z-index: 1000;
     }
     .quest {
       margin-bottom: 10px;
@@ -27,10 +28,48 @@
     .quest.active { border-color: orange; }
     .quest.completed { border-color: green; text-decoration: line-through; }
     .leaflet-popup-content-wrapper { max-width: 250px; }
+
+    #dm-toggle {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #fff;
+      border: 1px solid #999;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #dm-form {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      background: #fff;
+      border: 1px solid #999;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+
+  <button id="dm-toggle">Toggle DM Mode</button>
+
+  <div id="dm-form">
+    <label><strong>Location Name:</strong><br>
+      <input type="text" id="loc-name" style="width: 100%;">
+    </label><br><br>
+    <label><strong>Quest Title (optional):</strong><br>
+      <input type="text" id="loc-quest" style="width: 100%;">
+    </label><br><br>
+    <button onclick="addLocation()">Add Location</button>
+    <button onclick="cancelAdd()">Cancel</button>
+  </div>
+
   <div class="quest-log" id="questLog">
     <h3>Quest Log</h3>
     <div id="quests"></div>
@@ -43,28 +82,15 @@
       minZoom: -2
     });
 
-    const imageUrl = './map.png'; // replace with your image path
-    const imageBounds = [[0, 0], [1000, 1000]]; // adjust based on actual map size
-
+    const imageUrl = './map.png';
+    const imageBounds = [[0, 0], [1000, 1000]];
     L.imageOverlay(imageUrl, imageBounds).addTo(map);
     map.fitBounds(imageBounds);
 
     const locations = [
-      {
-        name: 'Blue X Island',
-        coords: [200, 200],
-        quests: [0]
-      },
-      {
-        name: 'Yellow X Island',
-        coords: [600, 400],
-        quests: [1]
-      },
-      {
-        name: 'Mainland Port (Pink X)',
-        coords: [950, 150],
-        quests: [2]
-      }
+      { name: 'Blue X Island', coords: [200, 200], quests: [0] },
+      { name: 'Yellow X Island', coords: [600, 400], quests: [1] },
+      { name: 'Mainland Port (Pink X)', coords: [950, 150], quests: [2] }
     ];
 
     const questData = [
@@ -99,6 +125,202 @@
     });
 
     renderQuestLog();
+
+    // DM Mode toggle
+    let dmMode = false;
+    let tempCoords = null;
+
+    document.getElementById('dm-toggle').onclick = () => {
+      dmMode = !dmMode;
+      document.getElementById('dm-toggle').style.backgroundColor = dmMode ? '#ddd' : '#fff';
+      alert(`DM Mode ${dmMode ? 'enabled' : 'disabled'}. Click the map to add a new location.`);
+    };
+
+    map.on('click', (e) => {
+      if (!dmMode) return;
+      tempCoords = [e.latlng.lat, e.latlng.lng];
+      document.getElementById('dm-form').style.display = 'block';
+    });
+
+    function addLocation() {
+      const name = document.getElementById('loc-name').value.trim();
+      const quest = document.getElementById('loc-quest').value.trim();
+      if (!name) return;
+
+      const marker = L.marker(tempCoords).addTo(map);
+      marker.bindPopup(`<strong>${name}</strong><br>${quest ? `Quest: ${quest}` : ''}`);
+      document.getElementById('loc-name').value = '';
+      document.getElementById('loc-quest').value = '';
+      document.getElementById('dm-form').style.display = 'none';
+    }
+
+    function cancelAdd() {
+      tempCoords = null;
+      document.getElementById('loc-name').value = '';
+      document.getElementById('loc-quest').value = '';
+      document.getElementById('dm-form').style.display = 'none';
+    }
   </script>
 </body>
+  <div id="map"></div>
+
+<button id="dm-toggle">Toggle DM Mode</button>
+
+<div id="dm-form">
+  <label><strong>Location Name:</strong><br>
+    <input type="text" id="loc-name" style="width: 100%;">
+  </label><br><br>
+  <label><strong>Quest Title (optional):</strong><br>
+    <input type="text" id="loc-quest" style="width: 100%;">
+  </label><br><br>
+  <button onclick="saveLocation()">Save</button>
+  <button onclick="cancelAdd()">Cancel</button>
+</div>
+
+<div class="quest-log" id="questLog">
+  <h3>Quest Log</h3>
+  <div id="quests"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map', {
+    crs: L.CRS.Simple,
+    minZoom: -2
+  });
+
+  const imageUrl = './map.png';
+  const imageBounds = [[0, 0], [1000, 1000]];
+  L.imageOverlay(imageUrl, imageBounds).addTo(map);
+  map.fitBounds(imageBounds);
+
+  let locations = [
+    { name: 'Blue X Island', coords: [200, 200], quests: [0] },
+    { name: 'Yellow X Island', coords: [600, 400], quests: [1] },
+    { name: 'Mainland Port (Pink X)', coords: [950, 150], quests: [2] }
+  ];
+
+  const questData = [
+    { title: "Find the Lost Artifact", description: "Something ancient was lost here.", status: "active" },
+    { title: "Secure the Trade Route", description: "Pirates have been attacking merchants.", status: "available" },
+    { title: "Diplomatic Envoy", description: "Send someone to negotiate peace.", status: "completed" }
+  ];
+
+  let markers = [];
+  let dmMode = false;
+  let tempCoords = null;
+  let editingIndex = null;
+
+  document.getElementById('dm-toggle').onclick = () => {
+    dmMode = !dmMode;
+    document.getElementById('dm-toggle').style.backgroundColor = dmMode ? '#ddd' : '#fff';
+    alert(`DM Mode ${dmMode ? 'enabled' : 'disabled'}. Click the map to add or manage locations.`);
+  };
+
+  function renderQuestLog() {
+    const questLog = document.getElementById('quests');
+    questLog.innerHTML = '';
+    questData.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = `quest ${q.status}`;
+      div.innerHTML = `<strong>${q.title}</strong><br><small>${q.description}</small>`;
+      div.onclick = () => cycleQuestStatus(i);
+      questLog.appendChild(div);
+    });
+  }
+
+  function cycleQuestStatus(index) {
+    const statuses = ['available', 'active', 'completed'];
+    const current = statuses.indexOf(questData[index].status);
+    questData[index].status = statuses[(current + 1) % statuses.length];
+    renderQuestLog();
+  }
+
+  function renderMarkers() {
+    // Remove all old markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    locations.forEach((loc, i) => {
+      const marker = L.marker(loc.coords).addTo(map);
+      marker.on('click', () => {
+        if (!dmMode) return;
+
+        marker.bindPopup(`
+          <strong>${loc.name}</strong><br>
+          ${loc.quests.length > 0 ? 'Quests:<br>' + loc.quests.map(id => '- ' + (questData[id]?.title || '')).join('<br>') : ''}
+          <br><br>
+          <button onclick="editLocation(${i})">✏️ Edit</button>
+          <button onclick="deleteLocation(${i})">🗑️ Delete</button>
+        `).openPopup();
+      });
+
+      markers.push(marker);
+    });
+  }
+
+  function editLocation(index) {
+    editingIndex = index;
+    const loc = locations[index];
+    tempCoords = loc.coords;
+    document.getElementById('loc-name').value = loc.name;
+    document.getElementById('loc-quest').value = loc.quests.length ? questData[loc.quests[0]]?.title || '' : '';
+    document.getElementById('dm-form').style.display = 'block';
+  }
+
+  function deleteLocation(index) {
+    if (!confirm("Are you sure you want to delete this location?")) return;
+    locations.splice(index, 1);
+    renderMarkers();
+  }
+
+  map.on('click', (e) => {
+    if (!dmMode) return;
+    tempCoords = [e.latlng.lat, e.latlng.lng];
+    editingIndex = null;
+    document.getElementById('loc-name').value = '';
+    document.getElementById('loc-quest').value = '';
+    document.getElementById('dm-form').style.display = 'block';
+  });
+
+  function saveLocation() {
+    const name = document.getElementById('loc-name').value.trim();
+    const quest = document.getElementById('loc-quest').value.trim();
+    if (!name) return;
+
+    const questIndex = quest ? questData.push({ title: quest, description: "Added in-session", status: "available" }) - 1 : null;
+    const questIds = questIndex !== null ? [questIndex] : [];
+
+    const newLoc = {
+      name,
+      coords: tempCoords,
+      quests: questIds
+    };
+
+    if (editingIndex !== null) {
+      locations[editingIndex] = newLoc;
+    } else {
+      locations.push(newLoc);
+    }
+
+    document.getElementById('loc-name').value = '';
+    document.getElementById('loc-quest').value = '';
+    document.getElementById('dm-form').style.display = 'none';
+    tempCoords = null;
+    editingIndex = null;
+    renderMarkers();
+    renderQuestLog();
+  }
+
+  function cancelAdd() {
+    tempCoords = null;
+    editingIndex = null;
+    document.getElementById('loc-name').value = '';
+    document.getElementById('loc-quest').value = '';
+    document.getElementById('dm-form').style.display = 'none';
+  }
+
+  renderQuestLog();
+  renderMarkers();
+</script>
 </html>
