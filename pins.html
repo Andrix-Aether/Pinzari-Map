@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D&D Campaign Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map { height: 100vh; }
+    .quest-log {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 300px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .quest {
+      margin-bottom: 10px;
+      padding: 5px;
+      border-left: 4px solid #444;
+    }
+    .quest.active { border-color: orange; }
+    .quest.completed { border-color: green; text-decoration: line-through; }
+    .leaflet-popup-content-wrapper { max-width: 250px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="quest-log" id="questLog">
+    <h3>Quest Log</h3>
+    <div id="quests"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      minZoom: -2
+    });
+
+    const imageUrl = './map.png'; // replace with your image path
+    const imageBounds = [[0, 0], [1000, 1000]]; // adjust based on actual map size
+
+    L.imageOverlay(imageUrl, imageBounds).addTo(map);
+    map.fitBounds(imageBounds);
+
+    const locations = [
+      {
+        name: 'Blue X Island',
+        coords: [200, 200],
+        quests: [0]
+      },
+      {
+        name: 'Yellow X Island',
+        coords: [600, 400],
+        quests: [1]
+      },
+      {
+        name: 'Mainland Port (Pink X)',
+        coords: [950, 150],
+        quests: [2]
+      }
+    ];
+
+    const questData = [
+      { title: "Find the Lost Artifact", description: "Something ancient was lost here.", status: "active" },
+      { title: "Secure the Trade Route", description: "Pirates have been attacking merchants.", status: "available" },
+      { title: "Diplomatic Envoy", description: "Send someone to negotiate peace.", status: "completed" }
+    ];
+
+    function renderQuestLog() {
+      const questLog = document.getElementById('quests');
+      questLog.innerHTML = '';
+      questData.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.className = `quest ${q.status}`;
+        div.innerHTML = `<strong>${q.title}</strong><br><small>${q.description}</small>`;
+        div.onclick = () => cycleQuestStatus(i);
+        questLog.appendChild(div);
+      });
+    }
+
+    function cycleQuestStatus(index) {
+      const statuses = ['available', 'active', 'completed'];
+      const current = statuses.indexOf(questData[index].status);
+      questData[index].status = statuses[(current + 1) % statuses.length];
+      renderQuestLog();
+    }
+
+    locations.forEach(loc => {
+      const marker = L.marker(loc.coords).addTo(map);
+      const linkedQuests = loc.quests.map(id => `- ${questData[id].title}`).join('<br>');
+      marker.bindPopup(`<strong>${loc.name}</strong><br>Quests:<br>${linkedQuests}`);
+    });
+
+    renderQuestLog();
+  </script>
+</body>
+</html>
