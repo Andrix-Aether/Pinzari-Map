@@ -255,55 +255,53 @@
     let currentCharacters = [];
 
     // Initialize the map with your custom image
-    function initMap() {
-        // Create the map
-        map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: -1,
-            maxZoom: 3
-        });
+  function initMap() {
+    // Create the map
+    map = L.map('map', {
+        crs: L.CRS.Simple,
+        minZoom: -1,
+        maxZoom: 3
+    });
 
-        // Your map.png dimensions (UPDATE THESE TO MATCH YOUR IMAGE)
-        const mapWidth = 692;
-        const mapHeight = 676;
+    // Your map.png dimensions (UPDATE THESE TO MATCH YOUR IMAGE)
+    const mapWidth = 692;
+    const mapHeight = 676;
+    
+    // Calculate the bounds
+    const southWest = map.unproject([0, mapHeight], map.getMaxZoom());
+    const northEast = map.unproject([mapWidth, 0], map.getMaxZoom());
+    const bounds = new L.LatLngBounds(southWest, northEast);
+    
+    // Add your map image (VERIFY 'map.png' PATH IS CORRECT)
+    L.imageOverlay('map.png', bounds).addTo(map)
+        .on('error', () => alert('Error loading map image! Check path and dimensions'));
+    
+    // Set the view to center of the map
+    map.fitBounds(bounds);
+    map.setZoom(3); // Start zoomed in (try values between 2-4)
+    
+    // Click handler for adding markers
+    map.on('click', function(e) {
+        if (!dmMode) return;
         
-        // Calculate the bounds
-        const southWest = map.unproject([0, mapHeight], map.getMaxZoom());
-        const northEast = map.unproject([mapWidth, 0], map.getMaxZoom());
-        const bounds = new L.LatLngBounds(southWest, northEast);
+        // Clear any existing temp marker
+        if (tempMarker) {
+            map.removeLayer(tempMarker);
+            tempMarker = null;
+        }
         
-        // Add your map image (VERIFY 'map.png' PATH IS CORRECT)
-        L.imageOverlay('map.png', bounds).addTo(map)
-            .on('error', () => alert('Error loading map image! Check path and dimensions'));
+        // Create new temporary marker
+        tempMarker = L.marker(e.latlng, {
+            icon: createMarkerIcon('pin'),
+            draggable: true
+        }).addTo(map);
         
-        // Set the view to center of the map
-map.fitBounds(bounds);
-map.setZoom(3); // Start zoomed in (try values between 2-4)
-});
-        
-        // Click handler for adding markers
-        map.on('click', function(e) {
-            if (!dmMode) return;
-            
-            // Clear any existing temp marker
-            if (tempMarker) {
-                map.removeLayer(tempMarker);
-                tempMarker = null;
-            }
-            
-            // Create new temporary marker
-            tempMarker = L.marker(e.latlng, {
-                icon: createMarkerIcon('pin'),
-                draggable: true
-            }).addTo(map);
-            
-            // Reset form for new location
-            resetForm();
-            document.getElementById('dm-form').style.display = 'block';
-            document.getElementById('loc-name').focus();
-        });
-    }
-
+        // Reset form for new location
+        resetForm();
+        document.getElementById('dm-form').style.display = 'block';
+        document.getElementById('loc-name').focus();
+    });
+}
     // Helper function to reset the form
     function resetForm() {
         currentLocationId = null;
