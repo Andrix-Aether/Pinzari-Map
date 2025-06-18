@@ -246,7 +246,7 @@
     // Map variables
     let map;
     let dmMode = false;
-    let markers = [];
+    let markers = {};
     let locations = [];
     let quests = {};
     let tempMarker = null;
@@ -284,6 +284,7 @@
                 // Remove any existing temp marker
                 if (tempMarker) {
                     map.removeLayer(tempMarker);
+                    tempMarker = null;
                 }
                 
                 // Add new temporary marker
@@ -355,50 +356,38 @@
         // Load locations
         const locationsRef = ref(db, 'locations');
         onValue(locationsRef, (snapshot) => {
-            locations = [];
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
+            const data = snapshot.val() || {};
             
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).forEach(key => {
-                    const loc = data[key];
-                    loc.id = key;
-                    locations.push(loc);
-                    
-                    // Determine icon type
-                    const iconType = loc.iconType || 
-                                   (loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active' ? 'star' : 'pin');
-                    
-                    // Add marker to map
-                    const marker = L.marker([loc.lat, loc.lng], {
+            // Remove markers for locations that no longer exist
+            Object.keys(markers).forEach(id => {
+                if (!data[id]) {
+                    map.removeLayer(markers[id]);
+                    delete markers[id];
+                }
+            });
+            
+            locations = [];
+            Object.keys(data).forEach(key => {
+                const loc = data[key];
+                loc.id = key;
+                locations.push(loc);
+                
+                // Determine icon type
+                const iconType = loc.iconType || 
+                               (loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active' ? 'star' : 'pin');
+                
+                // Update existing marker or create new one
+                if (markers[loc.id]) {
+                    markers[loc.id].setLatLng([loc.lat, loc.lng]);
+                    markers[loc.id].setIcon(createMarkerIcon(iconType));
+                    updatePopupContent(markers[loc.id], loc);
+                } else {
+                    markers[loc.id] = L.marker([loc.lat, loc.lng], {
                         icon: createMarkerIcon(iconType)
                     }).addTo(map);
-                    
-                    // Add popup with location info
-                    let popupContent = `<strong>${loc.name}</strong>`;
-                    if (loc.desc) popupContent += `<br>${loc.desc}`;
-                    
-                    if (loc.questId && quests[loc.questId]) {
-                        const quest = quests[loc.questId];
-                        popupContent += `<br><br><strong>Quest:</strong> ${quest.title}`;
-                        if (quest.description) popupContent += `<br>${quest.description}`;
-                    }
-                    
-                    if (loc.characters && loc.characters.length > 0) {
-                        popupContent += `<br><br><strong>Characters:</strong><br>`;
-                        popupContent += loc.characters.join(', ');
-                    }
-                    
-                    if (dmMode) {
-                        popupContent += `<br><br><button onclick="editLocation('${loc.id}')">Edit</button>`;
-                        popupContent += ` <button onclick="deleteLocation('${loc.id}')">Delete</button>`;
-                    }
-                    
-                    marker.bindPopup(popupContent);
-                    markers.push(marker);
-                });
-            }
+                    updatePopupContent(markers[loc.id], loc);
+                }
+            });
         });
 
         // Load quests
@@ -408,6 +397,30 @@
             updateQuestLog();
             updateMarkers();
         });
+    }
+
+    // Helper function to update popup content
+    function updatePopupContent(marker, loc) {
+        let popupContent = `<strong>${loc.name}</strong>`;
+        if (loc.desc) popupContent += `<br>${loc.desc}`;
+        
+        if (loc.questId && quests[loc.questId]) {
+            const quest = quests[loc.questId];
+            popupContent += `<br><br><strong>Quest:</strong> ${quest.title}`;
+            if (quest.description) popupContent += `<br>${quest.description}`;
+        }
+        
+        if (loc.characters && loc.characters.length > 0) {
+            popupContent += `<br><br><strong>Characters:</strong><br>`;
+            popupContent += loc.characters.join(', ');
+        }
+        
+        if (dmMode) {
+            popupContent += `<br><br><button onclick="editLocation('${loc.id}')">Edit</button>`;
+            popupContent += ` <button onclick="deleteLocation('${loc.id}')">Delete</button>`;
+        }
+        
+        marker.bindPopup(popupContent);
     }
 
     // Update quest log display
@@ -434,16 +447,11 @@
 
     // Update all markers
     function updateMarkers() {
-        locations.forEach((loc, index) => {
+        locations.forEach((loc) => {
             const iconType = loc.iconType || 
                            (loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active' ? 'star' : 'pin');
-            markers[index].setIcon(createMarkerIcon(iconType));
-            
-            // Update popup if needed
-            if (markers[index].isPopupOpen()) {
-                markers[index].togglePopup();
-                markers[index].togglePopup();
-            }
+            markers[loc.id].setIcon(createMarkerIcon(iconType));
+            updatePopupContent(markers[loc.id], loc);
         });
     }
 
@@ -473,67 +481,30 @@
         const latlng = tempMarker.getLatLng();
         
         try {
-            // If editing existing location
-            if (currentLocationId) {
-                const locationData = {
-                    id: currentLocationId,
-                    name: name,
-                    desc: desc,
-                    lat: latlng.lat,
-                    lng: latlng.lng,
-                    iconType: iconType,
-                    characters: currentCharacters,
-                    questId: locations.find(l => l.id === currentLocationId)?.questId || null
-                };
-                
-                // Handle quest creation/update if needed
-                if (hasQuest) {
-                    if (locationData.questId) {
-                        // Update existing quest
-                        await set(ref(db, `quests/${locationData.questId}`), {
-                            id: locationData.questId,
-                            title: questTitle,
-                            description: questDesc,
-                            status: 'active',
-                            locationId: locationData.id
-                        });
-                    } else {
-                        // Create new quest
-                        const newQuestRef = push(ref(db, 'quests'));
-                        locationData.questId = newQuestRef.key;
-                        await set(newQuestRef, {
-                            id: newQuestRef.key,
-                            title: questTitle,
-                            description: questDesc,
-                            status: 'active',
-                            locationId: locationData.id
-                        });
-                    }
-                } else if (locationData.questId) {
-                    // Remove quest if it exists but shouldn't
-                    await remove(ref(db, `quests/${locationData.questId}`));
-                    locationData.questId = null;
-                }
-                
-                // Update location
-                await set(ref(db, `locations/${locationData.id}`), locationData);
-            } 
-            // If creating new location
-            else {
-                const newLocRef = push(ref(db, 'locations'));
-                const locationData = {
-                    id: newLocRef.key,
-                    name: name,
-                    desc: desc,
-                    lat: latlng.lat,
-                    lng: latlng.lng,
-                    iconType: iconType,
-                    characters: currentCharacters,
-                    questId: null
-                };
-                
-                // Create quest if needed
-                if (hasQuest) {
+            const locationData = {
+                id: currentLocationId || push(ref(db, 'locations')).key,
+                name: name,
+                desc: desc,
+                lat: latlng.lat,
+                lng: latlng.lng,
+                iconType: iconType,
+                characters: currentCharacters,
+                questId: currentLocationId ? locations.find(l => l.id === currentLocationId)?.questId || null : null
+            };
+            
+            // Handle quest creation/update if needed
+            if (hasQuest) {
+                if (locationData.questId) {
+                    // Update existing quest
+                    await set(ref(db, `quests/${locationData.questId}`), {
+                        id: locationData.questId,
+                        title: questTitle,
+                        description: questDesc,
+                        status: 'active',
+                        locationId: locationData.id
+                    });
+                } else {
+                    // Create new quest
                     const newQuestRef = push(ref(db, 'quests'));
                     locationData.questId = newQuestRef.key;
                     await set(newQuestRef, {
@@ -541,17 +512,26 @@
                         title: questTitle,
                         description: questDesc,
                         status: 'active',
-                        locationId: newLocRef.key
+                        locationId: locationData.id
                     });
                 }
-                
-                // Save location
-                await set(newLocRef, locationData);
+            } else if (locationData.questId) {
+                // Remove quest if it exists but shouldn't
+                await remove(ref(db, `quests/${locationData.questId}`));
+                locationData.questId = null;
+            }
+            
+            // Save location
+            await set(ref(db, `locations/${locationData.id}`), locationData);
+            
+            // Restore the original marker
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+                tempMarker = null;
             }
             
             // Reset form
             document.getElementById('dm-form').style.display = 'none';
-            tempMarker = null;
         } catch (error) {
             console.error('Error saving data:', error);
             alert('Failed to save data. Check console for details.');
@@ -562,6 +542,11 @@
     async function editLocation(id) {
         const loc = locations.find(l => l.id === id);
         if (!loc) return;
+        
+        // Remove the existing marker from the map temporarily
+        if (markers[id]) {
+            map.removeLayer(markers[id]);
+        }
         
         currentLocationId = id;
         hasQuest = Boolean(loc.questId);
@@ -593,10 +578,7 @@
         // Render characters
         renderCharactersList();
         
-        // Create temp marker
-        if (tempMarker) {
-            map.removeLayer(tempMarker);
-        }
+        // Create temp marker using the existing location's position
         tempMarker = L.marker([loc.lat, loc.lng], {
             icon: createMarkerIcon(loc.iconType || (hasQuest ? 'star' : 'pin')),
             draggable: true
@@ -671,6 +653,10 @@
                 map.removeLayer(tempMarker);
                 tempMarker = null;
             }
+            // Restore original marker if editing
+            if (currentLocationId && markers[currentLocationId]) {
+                markers[currentLocationId].addTo(map);
+            }
         });
         
         document.getElementById('add-character-btn').addEventListener('click', addCharacter);
@@ -680,5 +666,4 @@
     };
 </script>
 </body>
-</html>
 </html>
