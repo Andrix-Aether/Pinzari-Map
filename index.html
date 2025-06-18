@@ -259,32 +259,37 @@ function initMap() {
     // Create the map with higher maxZoom
     map = L.map('map', {
         crs: L.CRS.Simple,
-        minZoom: -1,
-        maxZoom: 5,  // Increased from 3 (try values between 4-6)
-        zoomSnap: 0.25
+        minZoom: -2,  // Allow more zoom out
+        maxZoom: 5,   // Allow more zoom in
+        zoomSnap: 0.25,
+        zoomDelta: 0.5
     });
 
     // Your map.png dimensions
     const mapWidth = 692;
     const mapHeight = 676;
     
-    // ADJUST THIS SCALE VALUE TO FIX ZOOM LEVEL
-    const scale = 0.5; // Start with 0.5, adjust between 0.1-1 as needed
+    // Calculate pixel-to-coordinate ratio
+    // This helps Leaflet understand how to scale your image
+    const pixelRatio = 50; // Adjust this value (start with 50, try 20-100)
     
-    // Calculate the bounds with scaling
-    const southWest = map.unproject([0, mapHeight*scale], map.getMaxZoom());
-    const northEast = map.unproject([mapWidth*scale, 0], map.getMaxZoom());
+    // Calculate the bounds
+    const southWest = map.unproject([0, mapHeight], map.getMaxZoom()-1);
+    const northEast = map.unproject([mapWidth, 0], map.getMaxZoom()-1);
     const bounds = new L.LatLngBounds(southWest, northEast);
     
-    // Add your map image with scaled bounds
-    L.imageOverlay('map.png', bounds).addTo(map)
-        .on('error', () => alert('Error loading map image!'));
+    // Add your map image
+    L.imageOverlay('map.png', bounds, {
+        interactive: true,
+        pixelRatio: pixelRatio  // This helps with scaling
+    }).addTo(map)
+    .on('error', () => alert('Error loading map image!'));
     
-    // Set initial view - use fitBounds instead of setView
+    // Set initial view to show the whole map at a reasonable size
     map.fitBounds(bounds);
     
-    // Set a reasonable starting zoom level
-    map.setZoom(0); // Try values between -1 to 2
+    // Set a good starting zoom level (try values between -1 to 1)
+    map.setZoom(0);
     
     // Click handler for adding markers
     map.on('click', function(e) {
