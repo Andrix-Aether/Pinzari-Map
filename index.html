@@ -263,7 +263,9 @@
         maxZoom: 5,  // Increased from 3 (try values between 4-6)
         zoomSnap: 0.25
     });
-
+const scale = 1; // Try values like 0.5 or 2 if needed
+const southWest = map.unproject([0, mapHeight*scale], map.getMaxZoom());
+const northEast = map.unproject([mapWidth*scale, 0], map.getMaxZoom());
     // Your map.png dimensions
     const mapWidth = 692;
     const mapHeight = 676;
