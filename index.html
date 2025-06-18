@@ -69,10 +69,37 @@
             cursor: pointer;
         }
         
+        #journal-toggle {
+            position: absolute;
+            top: 10px;
+            left: 220px;
+            z-index: 1000;
+            padding: 8px 12px;
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+            cursor: pointer;
+        }
+        
         #dm-form {
             position: absolute;
             top: 50px;
             left: 10px;
+            z-index: 1000;
+            background: #333;
+            padding: 15px;
+            border: 1px solid #666;
+            width: 300px;
+            display: none;
+            color: white;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        #journal-container {
+            position: absolute;
+            top: 50px;
+            right: 10px;
             z-index: 1000;
             background: #333;
             padding: 15px;
@@ -95,7 +122,8 @@
             color: white;
         }
         
-        #dm-form button {
+        #dm-form button,
+        #journal-container button {
             margin-top: 10px;
             padding: 5px 10px;
             background: #555;
@@ -177,6 +205,51 @@
             color: #e67e22;
             text-shadow: 1px 1px 2px black;
         }
+        
+        /* Journal styles */
+        .journal-entry {
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #444;
+            cursor: pointer;
+        }
+        
+        .journal-entry h4 {
+            margin: 0 0 5px 0;
+            color: #f1c40f;
+        }
+        
+        .journal-content {
+            display: none;
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px dashed #666;
+        }
+        
+        #journal-entries {
+            max-height: 60vh;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        #journal-form {
+            margin-top: 15px;
+        }
+        
+        #journal-title, #journal-text {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            background: #444;
+            border: 1px solid #666;
+            color: white;
+        }
+        
+        #journal-text {
+            height: 150px;
+        }
     </style>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
@@ -190,6 +263,7 @@
 
 <div id="map-container">
     <button id="dm-toggle">Enable DM Mode</button>
+    <button id="journal-toggle">Journal</button>
     
     <div id="dm-form">
         <h3>Location Details</h3>
@@ -237,6 +311,17 @@
         </div>
     </div>
     
+    <div id="journal-container">
+        <h3>Journal</h3>
+        <div id="journal-entries"><em>No entries yet</em></div>
+        <div id="journal-form">
+            <input type="text" id="journal-title" placeholder="Entry title">
+            <textarea id="journal-text" placeholder="Write your entry here..."></textarea>
+            <button id="journal-save">Save Entry</button>
+            <button id="journal-cancel">Cancel</button>
+        </div>
+    </div>
+    
     <div id="map"></div>
 </div>
 
@@ -267,9 +352,11 @@
     // Map variables
     let map;
     let dmMode = false;
+    let journalMode = false;
     let markers = {};
     let locations = [];
     let quests = {};
+    let journalEntries = {};
     let tempMarker = null;
     let currentLocationId = null;
     let hasQuest = false;
@@ -383,6 +470,95 @@
         });
     }
 
+    // Create journal entry element
+    function createJournalEntryElement(entry) {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'journal-entry';
+        entryDiv.innerHTML = `
+            <h4>${entry.title}</h4>
+            <div class="journal-content">${entry.text}</div>
+            <small>${new Date(entry.timestamp).toLocaleString()}</small>
+            <button class="delete-entry" data-id="${entry.id}">Delete</button>
+        `;
+        
+        // Toggle content visibility
+        const content = entryDiv.querySelector('.journal-content');
+        content.style.display = 'none';
+        entryDiv.querySelector('h4').addEventListener('click', () => {
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // Delete button
+        entryDiv.querySelector('.delete-entry').addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteJournalEntry(entry.id);
+        });
+        
+        return entryDiv;
+    }
+
+    // Load journal entries
+    function loadJournal() {
+        const journalRef = ref(db, 'journal');
+        onValue(journalRef, (snapshot) => {
+            journalEntries = snapshot.val() || {};
+            const container = document.getElementById('journal-entries');
+            container.innerHTML = '';
+            
+            if (Object.keys(journalEntries).length === 0) {
+                container.innerHTML = '<em>No journal entries yet</em>';
+                return;
+            }
+            
+            // Convert to array and sort by timestamp (newest first)
+            const sortedEntries = Object.values(journalEntries).sort((a, b) => b.timestamp - a.timestamp);
+            
+            sortedEntries.forEach(entry => {
+                container.appendChild(createJournalEntryElement(entry));
+            });
+        });
+    }
+
+    // Save journal entry
+    async function saveJournalEntry() {
+        const title = document.getElementById('journal-title').value.trim();
+        const text = document.getElementById('journal-text').value.trim();
+        
+        if (!title || !text) {
+            alert('Please enter both title and content');
+            return;
+        }
+        
+        try {
+            const newEntryRef = push(ref(db, 'journal'));
+            await set(newEntryRef, {
+                id: newEntryRef.key,
+                title: title,
+                text: text,
+                timestamp: Date.now()
+            });
+            
+            // Clear form
+            document.getElementById('journal-title').value = '';
+            document.getElementById('journal-text').value = '';
+        } catch (error) {
+            console.error('Error saving journal entry:', error);
+            alert('Failed to save journal entry');
+        }
+    }
+
+    // Delete journal entry
+    async function deleteJournalEntry(id) {
+        if (!confirm('Delete this journal entry?')) return;
+        
+        try {
+            await remove(ref(db, `journal/${id}`));
+        } catch (error) {
+            console.error('Error deleting journal entry:', error);
+            alert('Failed to delete journal entry');
+        }
+    }
+
     // Load data from Firebase
     function loadData() {
         // Load locations
@@ -429,6 +605,9 @@
             updateQuestLog();
             updateMarkers();
         });
+        
+        // Load journal
+        loadJournal();
     }
 
     // Helper function to update popup content
@@ -677,6 +856,13 @@
             alert(`DM Mode ${dmMode ? 'ENABLED' : 'disabled'}. Click map to add locations.`);
         });
         
+        document.getElementById('journal-toggle').addEventListener('click', function() {
+            journalMode = !journalMode;
+            this.textContent = journalMode ? 'Close Journal' : 'Journal';
+            this.style.background = journalMode ? '#555' : '#333';
+            document.getElementById('journal-container').style.display = journalMode ? 'block' : 'none';
+        });
+        
         document.getElementById('toggle-quest').addEventListener('click', toggleQuest);
         document.getElementById('save-btn').addEventListener('click', saveLocation);
         document.getElementById('cancel-btn').addEventListener('click', function() {
@@ -689,6 +875,12 @@
             if (currentLocationId && markers[currentLocationId]) {
                 markers[currentLocationId].addTo(map);
             }
+        });
+        
+        document.getElementById('journal-save').addEventListener('click', saveJournalEntry);
+        document.getElementById('journal-cancel').addEventListener('click', function() {
+            document.getElementById('journal-title').value = '';
+            document.getElementById('journal-text').value = '';
         });
         
         document.getElementById('add-character-btn').addEventListener('click', addCharacter);
