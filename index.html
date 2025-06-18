@@ -255,7 +255,7 @@
     let currentCharacters = [];
 
     // Initialize the map with your custom image
-  function initMap() {
+function initMap() {
     // Create the map with higher maxZoom
     map = L.map('map', {
         crs: L.CRS.Simple,
@@ -263,30 +263,28 @@
         maxZoom: 5,  // Increased from 3 (try values between 4-6)
         zoomSnap: 0.25
     });
-const scale = 1; // Try values like 0.5 or 2 if needed
-const southWest = map.unproject([0, mapHeight*scale], map.getMaxZoom());
-const northEast = map.unproject([mapWidth*scale, 0], map.getMaxZoom());
+
     // Your map.png dimensions
     const mapWidth = 692;
     const mapHeight = 676;
     
-    // Calculate the bounds
-    const southWest = map.unproject([0, mapHeight], map.getMaxZoom());
-    const northEast = map.unproject([mapWidth, 0], map.getMaxZoom());
+    // ADJUST THIS SCALE VALUE TO FIX ZOOM LEVEL
+    const scale = 0.5; // Start with 0.5, adjust between 0.1-1 as needed
+    
+    // Calculate the bounds with scaling
+    const southWest = map.unproject([0, mapHeight*scale], map.getMaxZoom());
+    const northEast = map.unproject([mapWidth*scale, 0], map.getMaxZoom());
     const bounds = new L.LatLngBounds(southWest, northEast);
     
-    // Add your map image
+    // Add your map image with scaled bounds
     L.imageOverlay('map.png', bounds).addTo(map)
         .on('error', () => alert('Error loading map image!'));
     
-    // Set initial view - THIS IS THE KEY CHANGE
-    map.setView(
-        map.unproject([mapWidth/2, mapHeight/2], map.getMaxZoom()), 
-        0  // Initial zoom level (0 = most zoomed out)
-    );
+    // Set initial view - use fitBounds instead of setView
+    map.fitBounds(bounds);
     
-    // Optional: Set minimum zoom to prevent zooming out too far
-    map.setMinZoom(-1);
+    // Set a reasonable starting zoom level
+    map.setZoom(0); // Try values between -1 to 2
     
     // Click handler for adding markers
     map.on('click', function(e) {
