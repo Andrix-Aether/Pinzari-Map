@@ -162,6 +162,21 @@
             width: 50px;
             display: inline-block;
         }
+
+        /* New icon styles */
+        .sword-icon {
+            font-size: 24px;
+            color: #e74c3c;
+            text-shadow: 1px 1px 2px black;
+            transform: rotate(-45deg);
+            display: inline-block;
+        }
+        
+        .house-icon {
+            font-size: 24px;
+            color: #e67e22;
+            text-shadow: 1px 1px 2px black;
+        }
     </style>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
@@ -181,59 +196,23 @@
         <input type="text" id="loc-name" placeholder="Location name" required>
         <textarea id="loc-desc" placeholder="Description (optional)" rows="3"></textarea>
         
-<div id="icon-selector">
-    <strong>Marker Icon:</strong>
-    <label>
-        <input type="radio" name="icon-type" value="pin" checked> 📍 Pin
-    </label>
-    <label>
-        <input type="radio" name="icon-type" value="star"> ⭐ Star
-    </label>
-    <label>
-        <input type="radio" name="icon-type" value="ship"> <span class="ship-icon">⛵</span> Ship
-    </label>
-    <label>
-        <input type="radio" name="icon-type" value="sword"> ⚔️ Sword
-    </label>
-    <label>
-        <input type="radio" name="icon-type" value="house"> 🏠 House
-    </label>
-</div>
-
-// 2. Then update the createMarkerIcon function:
-function createMarkerIcon(iconType) {
-    const icons = {
-        pin: { html: '📍', className: 'pin-icon' },
-        star: { html: '⭐', className: 'star-icon' },
-        ship: { html: '⛵', className: 'ship-icon' },
-        sword: { html: '⚔️', className: 'sword-icon' },
-        house: { html: '🏠', className: 'house-icon' }
-    };
-    
-    return L.divIcon({
-        className: icons[iconType].className,
-        html: icons[iconType].html,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15] // Centers the icon on the point
-    });
-}
-
-// 3. Optional: Add some CSS styling for the new icons:
-<style>
-    .sword-icon {
-        font-size: 24px;
-        color: #e74c3c;
-        text-shadow: 1px 1px 2px black;
-        transform: rotate(-45deg);
-        display: inline-block;
-    }
-    
-    .house-icon {
-        font-size: 24px;
-        color: #e67e22;
-        text-shadow: 1px 1px 2px black;
-    }
-</style>
+        <div id="icon-selector">
+            <strong>Marker Icon:</strong>
+            <label>
+                <input type="radio" name="icon-type" value="pin" checked> 📍 Pin
+            </label>
+            <label>
+                <input type="radio" name="icon-type" value="star"> ⭐ Star
+            </label>
+            <label>
+                <input type="radio" name="icon-type" value="ship"> <span class="ship-icon">⛵</span> Ship
+            </label>
+            <label>
+                <input type="radio" name="icon-type" value="sword"> <span class="sword-icon">⚔️</span> Sword
+            </label>
+            <label>
+                <input type="radio" name="icon-type" value="house"> <span class="house-icon">🏠</span> Cottage
+            </label>
         </div>
         
         <div id="quest-section" style="display:none;">
@@ -297,59 +276,75 @@ function createMarkerIcon(iconType) {
     let currentCharacters = [];
 
     // Initialize the map with your custom image
-function initMap() {
-    // Create the map
-    map = L.map('map', {
-        crs: L.CRS.Simple,
-        minZoom: -1,
-        maxZoom: 4,
-        zoomControl: true
-    });
+    function initMap() {
+        // Create the map
+        map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: -1,
+            maxZoom: 4,
+            zoomControl: true
+        });
 
-    // Your map.png dimensions (must match actual image size)
-    const mapWidth = 692;
-    const mapHeight = 676;
-    
-    // Define the image bounds
-    // We'll use a simple coordinate system where:
-    // - Top-left corner is (0,0)
-    // - Bottom-right corner is (mapWidth, mapHeight)
-    const southWest = map.unproject([0, mapHeight], 0);
-    const northEast = map.unproject([mapWidth, 0], 0);
-    const bounds = new L.LatLngBounds(southWest, northEast);
-    
-    // Add your map image
-    L.imageOverlay('map.png', bounds).addTo(map)
-        .on('error', () => alert('Error loading map image!'));
-    
-    // Set the view to show the entire map initially
-    map.fitBounds(bounds);
-    
-    // Set a reasonable initial zoom level
-    map.setZoom(0);
-    
-    // Click handler for adding markers
-    map.on('click', function(e) {
-        if (!dmMode) return;
+        // Your map.png dimensions (must match actual image size)
+        const mapWidth = 692;
+        const mapHeight = 676;
         
-        // Clear any existing temp marker
-        if (tempMarker) {
-            map.removeLayer(tempMarker);
-            tempMarker = null;
-        }
+        // Define the image bounds
+        const southWest = map.unproject([0, mapHeight], 0);
+        const northEast = map.unproject([mapWidth, 0], 0);
+        const bounds = new L.LatLngBounds(southWest, northEast);
         
-        // Create new temporary marker
-        tempMarker = L.marker(e.latlng, {
-            icon: createMarkerIcon('pin'),
-            draggable: true
-        }).addTo(map);
+        // Add your map image
+        L.imageOverlay('map.png', bounds).addTo(map)
+            .on('error', () => alert('Error loading map image!'));
         
-        // Reset form for new location
-        resetForm();
-        document.getElementById('dm-form').style.display = 'block';
-        document.getElementById('loc-name').focus();
-    });
-}
+        // Set the view to show the entire map initially
+        map.fitBounds(bounds);
+        
+        // Set a reasonable initial zoom level
+        map.setZoom(0);
+        
+        // Click handler for adding markers
+        map.on('click', function(e) {
+            if (!dmMode) return;
+            
+            // Clear any existing temp marker
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+                tempMarker = null;
+            }
+            
+            // Create new temporary marker
+            tempMarker = L.marker(e.latlng, {
+                icon: createMarkerIcon('pin'),
+                draggable: true
+            }).addTo(map);
+            
+            // Reset form for new location
+            resetForm();
+            document.getElementById('dm-form').style.display = 'block';
+            document.getElementById('loc-name').focus();
+        });
+    }
+
+    // Create appropriate marker icon
+    function createMarkerIcon(iconType) {
+        const icons = {
+            pin: { html: '📍', className: 'pin-icon' },
+            star: { html: '⭐', className: 'star-icon' },
+            ship: { html: '⛵', className: 'ship-icon' },
+            sword: { html: '⚔️', className: 'sword-icon' },
+            house: { html: '🏠', className: 'house-icon' }
+        };
+        
+        return L.divIcon({
+            className: icons[iconType].className,
+            html: icons[iconType].html,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+    }
+
     // Helper function to reset the form
     function resetForm() {
         currentLocationId = null;
@@ -364,21 +359,6 @@ function initMap() {
         document.getElementById('quest-desc').value = '';
         document.querySelector('input[name="icon-type"][value="pin"]').checked = true;
         renderCharactersList();
-    }
-
-    // Create appropriate marker icon
-    function createMarkerIcon(iconType) {
-        const icons = {
-            pin: { html: '📍', className: 'pin-icon' },
-            star: { html: '⭐', className: 'star-icon' },
-            ship: { html: '⛵', className: 'ship-icon' }
-        };
-        
-        return L.divIcon({
-            className: icons[iconType].className,
-            html: icons[iconType].html,
-            iconSize: [30, 30]
-        });
     }
 
     // Render characters list in the form
