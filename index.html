@@ -102,7 +102,7 @@
             color: white;
             border: 1px solid #666;
             cursor: pointer;
-            margin-right: 100px;
+            margin-right: 5px;
         }
         
         .marker-icon {
@@ -226,7 +226,7 @@
 <script type="module">
     // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, push, remove, get } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, push, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
     // Your Firebase configuration
     const firebaseConfig = {
@@ -243,7 +243,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-   // Map variables
+    // Map variables
     let map;
     let dmMode = false;
     let markers = {};
@@ -254,11 +254,32 @@
     let hasQuest = false;
     let currentCharacters = [];
 
-    // Initialize the map
+    // Initialize the map with your custom image
     function initMap() {
-        // [Previous map initialization code remains the same until the click handler]
+        // Create the map
+        map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: -1,
+            maxZoom: 3
+        });
+
+        // Your map.png dimensions (UPDATE THESE TO MATCH YOUR IMAGE)
+        const mapWidth = 692;
+        const mapHeight = 676;
         
-        // Modified click handler for DM mode
+        // Calculate the bounds
+        const southWest = map.unproject([0, mapHeight], map.getMaxZoom());
+        const northEast = map.unproject([mapWidth, 0], map.getMaxZoom());
+        const bounds = new L.LatLngBounds(southWest, northEast);
+        
+        // Add your map image (VERIFY 'map.png' PATH IS CORRECT)
+        L.imageOverlay('map.png', bounds).addTo(map)
+            .on('error', () => alert('Error loading map image! Check path and dimensions'));
+        
+        // Set the view to center of the map
+        map.fitBounds(bounds);
+        
+        // Click handler for adding markers
         map.on('click', function(e) {
             if (!dmMode) return;
             
@@ -296,70 +317,6 @@
         document.querySelector('input[name="icon-type"][value="pin"]').checked = true;
         renderCharactersList();
     }
-
-    // Modified editLocation function
-    async function editLocation(id) {
-        const loc = locations.find(l => l.id === id);
-        if (!loc) return;
-        
-        // Clear any existing temp marker
-        if (tempMarker) {
-            map.removeLayer(tempMarker);
-            tempMarker = null;
-        }
-        
-        // Hide the existing marker temporarily
-        if (markers[id]) {
-            map.removeLayer(markers[id]);
-        }
-        
-        currentLocationId = id;
-        hasQuest = Boolean(loc.questId);
-        currentCharacters = loc.characters || [];
-        
-        // Set form values
-        document.getElementById('loc-name').value = loc.name;
-        document.getElementById('loc-desc').value = loc.desc || '';
-        document.querySelector(`input[name="icon-type"][value="${loc.iconType || 'pin'}"]`).checked = true;
-        
-        // Set quest values if exists
-        if (loc.questId && quests[loc.questId]) {
-            const quest = quests[loc.questId];
-            document.getElementById('quest-title').value = quest.title;
-            document.getElementById('quest-desc').value = quest.description || '';
-            document.getElementById('quest-section').style.display = 'block';
-            document.getElementById('toggle-quest').textContent = 'Remove Quest';
-            document.getElementById('toggle-quest').classList.add('quest-toggle');
-        }
-        
-        // Render characters
-        renderCharactersList();
-        
-        // Create temp marker at existing location's position
-        tempMarker = L.marker([loc.lat, loc.lng], {
-            icon: createMarkerIcon(loc.iconType || (hasQuest ? 'star' : 'pin')),
-            draggable: true
-        }).addTo(map);
-        
-        // Show form
-        document.getElementById('dm-form').style.display = 'block';
-    }
-
-    // Modified cancel button handler in window.onload
-    document.getElementById('cancel-btn').addEventListener('click', function() {
-        document.getElementById('dm-form').style.display = 'none';
-        
-        // Remove temp marker
-        if (tempMarker) {
-            map.removeLayer(tempMarker);
-            tempMarker = null;
-        }
-        
-        // Restore original marker if we were editing
-        if (currentLocationId && markers[currentLocationId]) {
-            markers[currentLocationId].addTo(map);
-        }
-    });
 
     // Create appropriate marker icon
     function createMarkerIcon(iconType) {
@@ -463,8 +420,8 @@
         }
         
         if (dmMode) {
-            popupContent += `<br><br><button onclick="editLocation('${loc.id}')">Edit</button>`;
-            popupContent += ` <button onclick="deleteLocation('${loc.id}')">Delete</button>`;
+            popupContent += `<br><br><button onclick="window.editLocation('${loc.id}')">Edit</button>`;
+            popupContent += ` <button onclick="window.deleteLocation('${loc.id}')">Delete</button>`;
         }
         
         marker.bindPopup(popupContent);
@@ -497,8 +454,10 @@
         locations.forEach((loc) => {
             const iconType = loc.iconType || 
                            (loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active' ? 'star' : 'pin');
-            markers[loc.id].setIcon(createMarkerIcon(iconType));
-            updatePopupContent(markers[loc.id], loc);
+            if (markers[loc.id]) {
+                markers[loc.id].setIcon(createMarkerIcon(iconType));
+                updatePopupContent(markers[loc.id], loc);
+            }
         });
     }
 
@@ -571,13 +530,12 @@
             // Save location
             await set(ref(db, `locations/${locationData.id}`), locationData);
             
-            // Restore the original marker
+            // Clean up
             if (tempMarker) {
                 map.removeLayer(tempMarker);
                 tempMarker = null;
             }
             
-            // Reset form
             document.getElementById('dm-form').style.display = 'none';
         } catch (error) {
             console.error('Error saving data:', error);
@@ -590,7 +548,13 @@
         const loc = locations.find(l => l.id === id);
         if (!loc) return;
         
-        // Remove the existing marker from the map temporarily
+        // Clear any existing temp marker
+        if (tempMarker) {
+            map.removeLayer(tempMarker);
+            tempMarker = null;
+        }
+        
+        // Hide the existing marker temporarily
         if (markers[id]) {
             map.removeLayer(markers[id]);
         }
@@ -602,8 +566,6 @@
         // Set form values
         document.getElementById('loc-name').value = loc.name;
         document.getElementById('loc-desc').value = loc.desc || '';
-        
-        // Set icon type
         document.querySelector(`input[name="icon-type"][value="${loc.iconType || 'pin'}"]`).checked = true;
         
         // Set quest values if exists
@@ -614,18 +576,12 @@
             document.getElementById('quest-section').style.display = 'block';
             document.getElementById('toggle-quest').textContent = 'Remove Quest';
             document.getElementById('toggle-quest').classList.add('quest-toggle');
-        } else {
-            document.getElementById('quest-title').value = '';
-            document.getElementById('quest-desc').value = '';
-            document.getElementById('quest-section').style.display = 'none';
-            document.getElementById('toggle-quest').textContent = 'Add Quest';
-            document.getElementById('toggle-quest').classList.remove('quest-toggle');
         }
         
         // Render characters
         renderCharactersList();
         
-        // Create temp marker using the existing location's position
+        // Create temp marker at existing location's position
         tempMarker = L.marker([loc.lat, loc.lng], {
             icon: createMarkerIcon(loc.iconType || (hasQuest ? 'star' : 'pin')),
             draggable: true
@@ -690,6 +646,7 @@
             dmMode = !dmMode;
             this.textContent = dmMode ? 'Disable DM Mode' : 'Enable DM Mode';
             this.style.background = dmMode ? '#555' : '#333';
+            alert(`DM Mode ${dmMode ? 'ENABLED' : 'disabled'}. Click map to add locations.`);
         });
         
         document.getElementById('toggle-quest').addEventListener('click', toggleQuest);
