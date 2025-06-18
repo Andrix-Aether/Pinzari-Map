@@ -181,17 +181,59 @@
         <input type="text" id="loc-name" placeholder="Location name" required>
         <textarea id="loc-desc" placeholder="Description (optional)" rows="3"></textarea>
         
-        <div id="icon-selector">
-            <strong>Marker Icon:</strong>
-            <label>
-                <input type="radio" name="icon-type" value="pin" checked> 📍 Pin
-            </label>
-            <label>
-                <input type="radio" name="icon-type" value="star"> ⭐ Star (Quest)
-            </label>
-            <label>
-                <input type="radio" name="icon-type" value="ship"> <span class="ship-icon">⛵</span> Ship
-            </label>
+<div id="icon-selector">
+    <strong>Marker Icon:</strong>
+    <label>
+        <input type="radio" name="icon-type" value="pin" checked> 📍 Pin
+    </label>
+    <label>
+        <input type="radio" name="icon-type" value="star"> ⭐ Star
+    </label>
+    <label>
+        <input type="radio" name="icon-type" value="ship"> <span class="ship-icon">⛵</span> Ship
+    </label>
+    <label>
+        <input type="radio" name="icon-type" value="sword"> ⚔️ Sword
+    </label>
+    <label>
+        <input type="radio" name="icon-type" value="house"> 🏠 House
+    </label>
+</div>
+
+// 2. Then update the createMarkerIcon function:
+function createMarkerIcon(iconType) {
+    const icons = {
+        pin: { html: '📍', className: 'pin-icon' },
+        star: { html: '⭐', className: 'star-icon' },
+        ship: { html: '⛵', className: 'ship-icon' },
+        sword: { html: '⚔️', className: 'sword-icon' },
+        house: { html: '🏠', className: 'house-icon' }
+    };
+    
+    return L.divIcon({
+        className: icons[iconType].className,
+        html: icons[iconType].html,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15] // Centers the icon on the point
+    });
+}
+
+// 3. Optional: Add some CSS styling for the new icons:
+<style>
+    .sword-icon {
+        font-size: 24px;
+        color: #e74c3c;
+        text-shadow: 1px 1px 2px black;
+        transform: rotate(-45deg);
+        display: inline-block;
+    }
+    
+    .house-icon {
+        font-size: 24px;
+        color: #e67e22;
+        text-shadow: 1px 1px 2px black;
+    }
+</style>
         </div>
         
         <div id="quest-section" style="display:none;">
