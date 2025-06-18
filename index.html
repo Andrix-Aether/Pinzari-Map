@@ -60,7 +60,7 @@
         #dm-toggle {
             position: absolute;
             top: 10px;
-            left: 200px;
+            left: 100px;
             z-index: 1000;
             padding: 8px 12px;
             background: #333;
@@ -259,8 +259,8 @@
         // Create the map
         map = L.map('map', {
             crs: L.CRS.Simple,
-            minZoom: -5,
-            maxZoom: 5
+            minZoom: -1,
+            maxZoom: 10
         });
 
         // Your map.png dimensions (UPDATE THESE TO MATCH YOUR IMAGE)
@@ -277,10 +277,10 @@
             .on('error', () => alert('Error loading map image! Check path and dimensions'));
         
         // Set the view to center of the map
-       map.setView(
-    map.unproject([mapWidth/2, mapHeight/2], map.getMaxZoom()), 
-    2  // Initial zoom level (0 = default)
-);
+   map.fitBounds(bounds, { 
+    padding: [50, 50],  // Optional padding (pixels)
+    maxZoom: 3          // Force a more zoomed-in view
+});
         
         // Click handler for adding markers
         map.on('click', function(e) {
