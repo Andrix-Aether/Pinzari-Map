@@ -134,7 +134,7 @@
         <textarea id="loc-desc" placeholder="Description (optional)" rows="3"></textarea>
         <div id="quest-section" style="display:none;">
             <h4>Quest Details</h4>
-            <input type="text" id="quest-title" placeholder="Quest title">
+            <input type="text" id="quest-title" placeholder="Quest title" required>
             <textarea id="quest-desc" placeholder="Quest description" rows="2"></textarea>
         </div>
         <div>
@@ -154,7 +154,7 @@
 <script type="module">
     // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, push, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, push, remove, get } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
     // Your Firebase configuration
     const firebaseConfig = {
@@ -190,7 +190,7 @@
             maxZoom: 2
         });
 
-        // Your map.png dimensions (adjust these)
+        // Your map.png dimensions (adjust these to match your image)
         const mapWidth = 692;
         const mapHeight = 676;
         
@@ -348,6 +348,11 @@
             return;
         }
         
+        if (hasQuest && !questTitle) {
+            alert('Please enter a quest title');
+            return;
+        }
+        
         if (!tempMarker) {
             alert('No marker placed on map');
             return;
@@ -433,7 +438,7 @@
             tempMarker = null;
         } catch (error) {
             console.error('Error saving data:', error);
-            alert('Failed to save data');
+            alert('Failed to save data. Check console for details.');
         }
     }
 
