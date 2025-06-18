@@ -137,17 +137,17 @@
     const cancelBtn = document.getElementById('cancel-btn');
 
     // Toggle DM mode on/off
-    dmToggleBtn.onclick = () => {
-      dmMode = !dmMode;
-      dmToggleBtn.textContent = dmMode ? "Disable DM Mode" : "Enable DM Mode";
-      dmToggleBtn.style.backgroundColor = dmMode ? '#ddd' : '#fff';
-      if (!dmMode) {
-        dmForm.style.display = 'none';
-        tempCoords = null;
-        editingIndex = null;
-      }
-      alert(`DM Mode ${dmMode ? 'enabled' : 'disabled'}. Click map to add or edit locations.`);
-    };
+dmToggleBtn.onclick = () => {
+  dmMode = !dmMode;
+  dmToggleBtn.textContent = dmMode ? "Disable DM Mode" : "Enable DM Mode";
+  dmToggleBtn.style.backgroundColor = dmMode ? '#ddd' : '#fff';
+  if (!dmMode) {
+    dmForm.style.display = 'none';
+    tempCoords = null;
+    editingIndex = null;
+  }
+  alert(`DM Mode ${dmMode ? 'enabled' : 'disabled'}. Click the map to add or manage locations.`);
+};
 
     // Render quest log
     function renderQuestLog() {
