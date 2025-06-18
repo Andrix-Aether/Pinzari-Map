@@ -1,522 +1,413 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>D&D Campaign Map with Quests & Firebase Sync</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 0;
-    display: flex;
-    height: 100vh;
-  }
-  #quest-log {
-    width: 250px;
-    border-right: 1px solid #ccc;
-    padding: 10px;
-    overflow-y: auto;
-    background: #f9f9f9;
-  }
-  #quest-log h2 {
-    margin-top: 0;
-  }
-  #quests {
-    margin-top: 10px;
-  }
-  .quest {
-    border: 1px solid #aaa;
-    border-radius: 4px;
-    padding: 6px;
-    margin-bottom: 6px;
-    background: #fff;
-    cursor: pointer;
-  }
-  .quest.completed {
-    background: #d4ffd4;
-    text-decoration: line-through;
-  }
-  #map-container {
-    flex: 1;
-    position: relative;
-  }
-  #map {
-    width: 100%;
-    height: 100%;
-  }
-  #dm-toggle {
-    position: absolute;
-    top: 10px; left: 10px;
-    z-index: 1000;
-    padding: 8px 12px;
-    background: #fff;
-    border: 1px solid #ccc;
-    cursor: pointer;
-  }
-  #dm-form {
-    position: absolute;
-    top: 50px; left: 10px;
-    z-index: 1000;
-    background: #fff;
-    padding: 10px;
-    border: 1px solid #ccc;
-    max-width: 320px;
-    display: none;
-  }
-  #dm-form label {
-    display: block;
-    margin-top: 8px;
-  }
-  #dm-form input[type=text] {
-    width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
-  }
-  #dm-form button {
-    margin-top: 10px;
-    margin-right: 10px;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>D&D War Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background: #222;
+            color: white;
+        }
+        
+        #quest-log {
+            width: 250px;
+            border-right: 1px solid #444;
+            padding: 10px;
+            overflow-y: auto;
+            background: #333;
+        }
+        
+        #quest-log h2 {
+            margin-top: 0;
+            color: gold;
+        }
+        
+        #quests {
+            margin-top: 10px;
+        }
+        
+        .quest {
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #444;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quest:hover {
+            background: #555;
+        }
+        
+        .quest.completed {
+            background: #2a5a2a;
+            text-decoration: line-through;
+        }
+        
+        #map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #111;
+        }
+        
+        #dm-toggle {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            padding: 8px 12px;
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #dm-toggle:hover {
+            background: #444;
+        }
+        
+        #dm-form {
+            position: absolute
 
-  /* Star icon for quest marker */
-  .star-icon {
-    font-size: 24px;
-    color: gold;
-    text-shadow: 1px 1px 2px black;
-    user-select: none;
-  }
-</style>
+oh I am using github, and the map is already in the repository, it is called map.png
 
-<!-- Leaflet CSS -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-/>
+Perfect! Since you're using GitHub and your map image (map.png) is already in your repository, we'll use that. Here's the complete, simplified code that will work with your setup:
+html
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>D&D War Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background: #222;
+            color: white;
+        }
+        
+        #quest-log {
+            width: 250px;
+            border-right: 1px solid #444;
+            padding: 10px;
+            overflow-y: auto;
+            background: #333;
+        }
+        
+        #quest-log h2 {
+            margin-top: 0;
+            color: gold;
+        }
+        
+        #quests {
+            margin-top: 10px;
+        }
+        
+        .quest {
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #444;
+            cursor: pointer;
+        }
+        
+        #map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #111;
+        }
+        
+        #dm-toggle {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            padding: 8px 12px;
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+            cursor: pointer;
+        }
+        
+        #dm-form {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            z-index: 1000;
+            background: #333;
+            padding: 15px;
+            border: 1px solid #666;
+            width: 250px;
+            display: none;
+            color: white;
+        }
+        
+        #dm-form input {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            background: #444;
+            border: 1px solid #666;
+            color: white;
+        }
+        
+        #dm-form button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background: #555;
+            color: white;
+            border: 1px solid #666;
+            cursor: pointer;
+        }
+        
+        .marker-icon {
+            background: none;
+            border: none;
+            font-size: 24px;
+            text-shadow: 1px 1px 2px black;
+            cursor: pointer;
+        }
+    </style>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
 </head>
 <body>
 
 <div id="quest-log">
-  <h2>Quest Log</h2>
-  <div id="quests"><em>No active quests</em></div>
+    <h2>Quest Log</h2>
+    <div id="quests"><em>No active quests</em></div>
 </div>
 
 <div id="map-container">
-  <button id="dm-toggle">Enable DM Mode</button>
-
-  <div id="dm-form">
-    <h3>Edit Location</h3>
-    <label>
-      Location Name:
-      <input type="text" id="loc-name" />
-    </label>
-
-    <label>
-      Quest Title:
-      <input type="text" id="loc-quest" placeholder="Optional" />
-    </label>
-
-    <button id="toggle-quest-btn">Activate Quest</button>
-
-    <br />
-    <button id="save-loc-btn">Save Location</button>
-    <button id="cancel-loc-btn">Cancel</button>
-  </div>
-
-  <div id="map"></div>
+    <button id="dm-toggle">Enable DM Mode</button>
+    
+    <div id="dm-form">
+        <h3>Add Location</h3>
+        <input type="text" id="loc-name" placeholder="Location name">
+        <input type="text" id="loc-desc" placeholder="Description (optional)">
+        <div>
+            <button id="save-btn">Save</button>
+            <button id="cancel-btn">Cancel</button>
+        </div>
+    </div>
+    
+    <div id="map"></div>
 </div>
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
-<!-- Firebase JS SDK (using version 9 modular) -->
+<!-- Firebase -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-  import { getDatabase, ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, push, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-  // Your Firebase config here (replace with your actual keys!)
-const firebaseConfig = {
+    // Your Firebase configuration (same as before)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCSiNBtCiYN4ednW1_uIHryPsnTIgnjcpY",
+        authDomain: "pinzari-f2483.firebaseapp.com",
+        projectId: "pinzari-f2483",
+        storageBucket: "pinzari-f2483.appspot.com",
+        messagingSenderId: "815815853823",
+        appId: "1:815815853823:web:ee7cb2d443f40467066eca",
+        measurementId: "G-7CESPP944M"
+    };
 
-  apiKey: "AIzaSyCSiNBtCiYN4ednW1_uIHryPsnTIgnjcpY",
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-  authDomain: "pinzari-f2483.firebaseapp.com",
+    // Map variables
+    let map;
+    let dmMode = false;
+    let markers = [];
+    let locations = [];
+    let tempMarker = null;
 
-  projectId: "pinzari-f2483",
+    // Initialize the map with your custom image
+    function initMap() {
+        // Create the map
+        map = L.map('map', {
+            crs: L.CRS.Simple,  // Simple coordinate system (good for custom maps)
+            minZoom: -2,
+            maxZoom: 2
+        });
 
-  storageBucket: "pinzari-f2483.firebasestorage.com",
-
-  messagingSenderId: "815815853823",
-
-  appId: "1:815815853823:web:ee7cb2d443f40467066eca",
-
-  measurementId: "G-7CESPP944M"
-
-};
-
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  // State variables
-  let map, markers = [];
-  let dmMode = false;
-  let tempCoords = null;
-  let editingIndex = null;
-
-  // Data arrays:
-  // We'll keep local copies but all saved in firebase
-  let locations = []; // Each location: { id, name, coords: [lat,lng], questId or null }
-  let quests = {}; // Keyed by questId: { id, title, status }
-
-  // Initialize the map
-  function initMap() {
-    map = L.map('map').setView([40, -100], 4);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    map.on('click', (e) => {
-      if (!dmMode) return;
-      tempCoords = [e.latlng.lat, e.latlng.lng];
-      openDMForm(null);
-    });
-  }
-
-  // Render markers on the map
-  function renderMarkers() {
-    // Remove old markers
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-
-    locations.forEach((loc, i) => {
-      // Check if location has active quest
-      let hasActiveQuest = false;
-      if (loc.questId && quests[loc.questId]) {
-        hasActiveQuest = quests[loc.questId].status === 'active';
-      }
-
-      const icon = hasActiveQuest
-        ? L.divIcon({
-            className: 'star-icon',
-            html: '⭐',
-            iconSize: [24, 24],
-            iconAnchor: [12, 24]
-          })
-        : undefined;
-
-      const marker = L.marker(loc.coords, { icon }).addTo(map);
-
-      // Popup content
-      let popupHtml = `<strong>${loc.name}</strong>`;
-
-      if (loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active') {
-        popupHtml += `<br><strong>Quest:</strong> ${quests[loc.questId].title}`;
-      }
-
-      if (dmMode) {
-        popupHtml += `<br><br>
-          <button onclick="editLocation(${i})">✏️ Edit</button>
-          <button onclick="deleteLocation(${i})">🗑️ Delete</button>`;
-      }
-
-      marker.bindPopup(popupHtml);
-
-      markers.push(marker);
-    });
-  }
-
-  // Render quest log
-  function renderQuestLog() {
-    const questLog = document.getElementById('quests');
-    questLog.innerHTML = '';
-
-    // Filter active quests
-    const activeQuests = Object.values(quests).filter(q => q.status === 'active');
-
-    if (activeQuests.length === 0) {
-      questLog.innerHTML = '<em>No active quests</em>';
-      return;
+        // Your map.png dimensions (you'll need to adjust these)
+        const mapWidth = 692;  // Change to your image width in pixels
+        const mapHeight = 676; // Change to your image height in pixels
+        
+        // Calculate the bounds for your image
+        const southWest = map.unproject([0, mapHeight], map.getMaxZoom());
+        const northEast = map.unproject([mapWidth, 0], map.getMaxZoom());
+        const bounds = new L.LatLngBounds(southWest, northEast);
+        
+        // Add your map image
+        L.imageOverlay('map.png', bounds).addTo(map);
+        
+        // Set the view to center of the map
+        map.fitBounds(bounds);
+        
+        // Click handler for adding markers
+        map.on('click', function(e) {
+            if (dmMode) {
+                // Remove any existing temp marker
+                if (tempMarker) {
+                    map.removeLayer(tempMarker);
+                }
+                
+                // Add new temporary marker
+                tempMarker = L.marker(e.latlng, {
+                    icon: L.divIcon({
+                        className: 'marker-icon',
+                        html: '📍',
+                        iconSize: [30, 30]
+                    }),
+                    draggable: true
+                }).addTo(map);
+                
+                // Show the form
+                document.getElementById('dm-form').style.display = 'block';
+                document.getElementById('loc-name').focus();
+            }
+        });
     }
 
-    activeQuests.forEach(q => {
-      const div = document.createElement('div');
-      div.className = 'quest';
-      div.textContent = q.title;
-      div.title = q.description || '';
-      div.style.userSelect = "none";
-      // Optionally: add click to toggle completed status or other
-      questLog.appendChild(div);
-    });
-  }
-
-  // Open the DM form to add/edit location
-  function openDMForm(index) {
-    editingIndex = index;
-    const form = document.getElementById('dm-form');
-    form.style.display = 'block';
-
-    if (index === null) {
-      // New location form
-      document.getElementById('loc-name').value = '';
-      document.getElementById('loc-quest').value = '';
-      document.getElementById('toggle-quest-btn').textContent = 'Activate Quest';
-      tempCoords = tempCoords; // Already set on map click
-    } else {
-      const loc = locations[index];
-      document.getElementById('loc-name').value = loc.name;
-
-      if (loc.questId && quests[loc.questId]) {
-        document.getElementById('loc-quest').value = quests[loc.questId].title;
-        document.getElementById('toggle-quest-btn').textContent = quests[loc.questId].status === 'active' ? 'Deactivate Quest' : 'Activate Quest';
-      } else {
-        document.getElementById('loc-quest').value = '';
-        document.getElementById('toggle-quest-btn').textContent = 'Activate Quest';
-      }
-
-      tempCoords = loc.coords;
-    }
-  }
-
-  // Toggle quest button handler
-  async function toggleQuest() {
-    const questTitle = document.getElementById('loc-quest').value.trim();
-
-    if (!questTitle) {
-      alert("Please enter a quest title to toggle quest.");
-      return;
+    // Load locations from Firebase
+    function loadLocations() {
+        const locationsRef = ref(db, 'locations');
+        onValue(locationsRef, (snapshot) => {
+            locations = [];
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const loc = data[key];
+                    locations.push(loc);
+                    
+                    // Add marker to map
+                    const marker = L.marker([loc.lat, loc.lng], {
+                        icon: L.divIcon({
+                            className: 'marker-icon',
+                            html: '📍',
+                            iconSize: [30, 30]
+                        })
+                    }).addTo(map);
+                    
+                    // Add popup with location info
+                    marker.bindPopup(`
+                        <strong>${loc.name}</strong><br>
+                        ${loc.desc || ''}
+                        ${dmMode ? `<br><button onclick="deleteLocation('${loc.id}')">Delete</button>` : ''}
+                    `);
+                    
+                    markers.push(marker);
+                });
+            }
+        });
     }
 
-    if (editingIndex === null) {
-      // New location - quests require a location, so just toggle UI button text
-      if (document.getElementById('toggle-quest-btn').textContent === 'Activate Quest') {
-        document.getElementById('toggle-quest-btn').textContent = 'Deactivate Quest';
-      } else {
-        document.getElementById('toggle-quest-btn').textContent = 'Activate Quest';
-      }
-      return;
-    }
-
-    let loc = locations[editingIndex];
-
-    // If location has quest, toggle it off (remove quest)
-    if (loc.questId && quests[loc.questId]) {
-      // Toggle off quest if currently active
-      if (quests[loc.questId].status === 'active') {
-        await removeQuest(loc.questId);
-        loc.questId = null;
-        await saveLocationToFirebase(loc);
-        document.getElementById('toggle-quest-btn').textContent = 'Activate Quest';
-        renderQuestLog();
-        renderMarkers();
-        return;
-      }
-    }
-
-    // Else toggle on (create or reactivate quest)
-    if (loc.questId && quests[loc.questId]) {
-      // Reactivate existing quest
-      quests[loc.questId].status = 'active';
-      quests[loc.questId].title = questTitle;
-      await saveQuestToFirebase(quests[loc.questId]);
-      document.getElementById('toggle-quest-btn').textContent = 'Deactivate Quest';
-      renderQuestLog();
-      renderMarkers();
-    } else {
-      // Create new quest
-      const newQuestRef = push(ref(db, 'quests'));
-      const newQuest = {
-        id: newQuestRef.key,
-        title: questTitle,
-        status: 'active',
-        description: ''
-      };
-      await set(newQuestRef, newQuest);
-
-      // Link to location
-      loc.questId = newQuest.id;
-      await saveLocationToFirebase(loc);
-      document.getElementById('toggle-quest-btn').textContent = 'Deactivate Quest';
-      renderQuestLog();
-      renderMarkers();
-    }
-  }
-
-  // Save location handler
-  async function saveLocation() {
-    const name = document.getElementById('loc-name').value.trim();
-    const questTitle = document.getElementById('loc-quest').value.trim();
-
-    if (!name) {
-      alert('Location name cannot be empty.');
-      return;
-    }
-
-    if (editingIndex === null) {
-      // New location
-      const newLocRef = push(ref(db, 'locations'));
-      const newLoc = {
-        id: newLocRef.key,
-        name,
-        coords: tempCoords,
-        questId: null
-      };
-      await set(newLocRef, newLoc);
-
-      // If quest toggle says activated, create quest
-      if (document.getElementById('toggle-quest-btn').textContent === 'Deactivate Quest' && questTitle) {
-        const newQuestRef = push(ref(db, 'quests'));
-        const newQuest = {
-          id: newQuestRef.key,
-          title: questTitle,
-          status: 'active',
-          description: ''
+    // Save location to Firebase
+    async function saveLocation() {
+        const name = document.getElementById('loc-name').value.trim();
+        const desc = document.getElementById('loc-desc').value.trim();
+        
+        if (!name) {
+            alert('Please enter a location name');
+            return;
+        }
+        
+        if (!tempMarker) {
+            alert('No marker placed on map');
+            return;
+        }
+        
+        const locationData = {
+            id: push(ref(db, 'locations')).key,
+            name: name,
+            desc: desc,
+            lat: tempMarker.getLatLng().lat,
+            lng: tempMarker.getLatLng().lng
         };
-        await set(newQuestRef, newQuest);
-
-        newLoc.questId = newQuest.id;
-        await set(newLocRef, newLoc); // Update location with questId
-      }
-    } else {
-      // Update existing location
-      let loc = locations[editingIndex];
-      loc.name = name;
-      loc.coords = tempCoords;
-
-      // Quest toggle state determines if quest stays or removed
-      if (document.getElementById('toggle-quest-btn').textContent === 'Deactivate Quest') {
-        // Quest active - update or create
-        if (loc.questId && quests[loc.questId]) {
-          quests[loc.questId].title = questTitle;
-          quests[loc.questId].status = 'active';
-          await saveQuestToFirebase(quests[loc.questId]);
-        } else if (questTitle) {
-          // Create quest if missing
-          const newQuestRef = push(ref(db, 'quests'));
-          const newQuest = {
-            id: newQuestRef.key,
-            title: questTitle,
-            status: 'active',
-            description: ''
-          };
-          await set(newQuestRef, newQuest);
-          loc.questId = newQuest.id;
+        
+        try {
+            await set(ref(db, 'locations/' + locationData.id), locationData);
+            document.getElementById('dm-form').style.display = 'none';
+            document.getElementById('loc-name').value = '';
+            document.getElementById('loc-desc').value = '';
+            tempMarker = null;
+        } catch (error) {
+            console.error('Error saving location:', error);
+            alert('Failed to save location');
         }
-      } else {
-        // Quest deactivated - remove quest if exists
-        if (loc.questId && quests[loc.questId]) {
-          await removeQuest(loc.questId);
-          loc.questId = null;
+    }
+
+    // Delete location from Firebase
+    async function deleteLocation(id) {
+        if (confirm('Delete this location?')) {
+            try {
+                await remove(ref(db, 'locations/' + id));
+            } catch (error) {
+                console.error('Error deleting location:', error);
+                alert('Failed to delete location');
+            }
         }
-      }
-
-      await saveLocationToFirebase(loc);
     }
 
-    // Reset form
-    document.getElementById('loc-name').value = '';
-    document.getElementById('loc-quest').value = '';
-    document.getElementById('toggle-quest-btn').textContent = 'Activate Quest';
-    document.getElementById('dm-form').style.display = 'none';
-    tempCoords = null;
-    editingIndex = null;
-  }
+    // Make deleteLocation available globally
+    window.deleteLocation = deleteLocation;
 
-  // Remove quest from Firebase and local state
-  async function removeQuest(questId) {
-    await remove(ref(db, 'quests/' + questId));
-    delete quests[questId];
-
-    // Also remove from any locations referencing it
-    for (const loc of locations) {
-      if (loc.questId === questId) {
-        loc.questId = null;
-        await saveLocationToFirebase(loc);
-      }
-    }
-  }
-
-  // Save a single location to Firebase
-  async function saveLocationToFirebase(loc) {
-    await set(ref(db, 'locations/' + loc.id), loc);
-  }
-
-  // Save a single quest to Firebase
-  async function saveQuestToFirebase(quest) {
-    await set(ref(db, 'quests/' + quest.id), quest);
-  }
-
-  // Delete location handler
-  async function deleteLocation(index) {
-    if (!confirm(`Delete location "${locations[index].name}"?`)) return;
-    const loc = locations[index];
-
-    // Remove associated quest if any
-    if (loc.questId) {
-      await removeQuest(loc.questId);
-    }
-
-    await remove(ref(db, 'locations/' + loc.id));
-  }
-
-  // Edit location handler
-  function editLocation(index) {
-    openDMForm(index);
-  }
-
-  // Setup listeners on Firebase to keep local state in sync
-  function setupFirebaseListeners() {
-    // Listen to locations
-    const locationsRef = ref(db, 'locations');
-    onValue(locationsRef, (snapshot) => {
-      const val = snapshot.val() || {};
-      locations = Object.values(val);
-      renderMarkers();
-    });
-
-    // Listen to quests
-    const questsRef = ref(db, 'quests');
-    onValue(questsRef, (snapshot) => {
-      quests = snapshot.val() || {};
-      renderQuestLog();
-      renderMarkers();
-    });
-  }
-
-  // DM mode toggle button
-  const dmToggleBtn = document.getElementById('dm-toggle');
-  dmToggleBtn.onclick = () => {
-    dmMode = !dmMode;
-    dmToggleBtn.textContent = dmMode ? "Disable DM Mode" : "Enable DM Mode";
-    dmToggleBtn.style.backgroundColor = dmMode ? '#ddd' : '#fff';
-    if (!dmMode) {
-      document.getElementById('dm-form').style.display = 'none';
-      tempCoords = null;
-      editingIndex = null;
-    }
-    alert(`DM Mode ${dmMode ? 'enabled' : 'disabled'}. Click map to add or edit locations.`);
-  };
-
-  // Button event bindings
-  document.getElementById('save-loc-btn').onclick = saveLocation;
-  document.getElementById('cancel-loc-btn').onclick = () => {
-    document.getElementById('dm-form').style.display = 'none';
-    tempCoords = null;
-    editingIndex = null;
-  };
-  document.getElementById('toggle-quest-btn').onclick = toggleQuest;
-
-  // Initialize app
-  window.onload = () => {
-    initMap();
-    setupFirebaseListeners();
-  };
-
-  // Expose functions for popup buttons
-  window.editLocation = editLocation;
-  window.deleteLocation = deleteLocation;
-
+    // Initialize the app when page loads
+    window.onload = function() {
+        initMap();
+        loadLocations();
+        
+        // Set up button events
+        document.getElementById('dm-toggle').addEventListener('click', function() {
+            dmMode = !dmMode;
+            this.textContent = dmMode ? 'Disable DM Mode' : 'Enable DM Mode';
+            this.style.background = dmMode ? '#555' : '#333';
+        });
+        
+        document.getElementById('save-btn').addEventListener('click', saveLocation);
+        
+        document.getElementById('cancel-btn').addEventListener('click', function() {
+            document.getElementById('dm-form').style.display = 'none';
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+                tempMarker = null;
+            }
+        });
+    };
 </script>
-
 </body>
+</html>
 </html>
