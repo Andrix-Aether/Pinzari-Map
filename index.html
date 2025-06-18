@@ -256,14 +256,15 @@
 
     // Initialize the map with your custom image
   function initMap() {
-    // Create the map
+    // Create the map with higher maxZoom
     map = L.map('map', {
         crs: L.CRS.Simple,
         minZoom: -1,
-        maxZoom: 10
+        maxZoom: 5,  // Increased from 3 (try values between 4-6)
+        zoomSnap: 0.25
     });
 
-    // Your map.png dimensions (UPDATE THESE TO MATCH YOUR IMAGE)
+    // Your map.png dimensions
     const mapWidth = 692;
     const mapHeight = 676;
     
@@ -272,13 +273,18 @@
     const northEast = map.unproject([mapWidth, 0], map.getMaxZoom());
     const bounds = new L.LatLngBounds(southWest, northEast);
     
-    // Add your map image (VERIFY 'map.png' PATH IS CORRECT)
+    // Add your map image
     L.imageOverlay('map.png', bounds).addTo(map)
-        .on('error', () => alert('Error loading map image! Check path and dimensions'));
+        .on('error', () => alert('Error loading map image!'));
     
-    // Set the view to center of the map
-    map.fitBounds(bounds);
-    map.setZoom(3); // Start zoomed in (try values between 2-4)
+    // Set initial view - THIS IS THE KEY CHANGE
+    map.setView(
+        map.unproject([mapWidth/2, mapHeight/2], map.getMaxZoom()), 
+        0  // Initial zoom level (0 = most zoomed out)
+    );
+    
+    // Optional: Set minimum zoom to prevent zooming out too far
+    map.setMinZoom(-1);
     
     // Click handler for adding markers
     map.on('click', function(e) {
