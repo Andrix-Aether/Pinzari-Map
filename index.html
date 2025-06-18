@@ -260,7 +260,7 @@
         map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: -1,
-            maxZoom: 10
+            maxZoom: 3
         });
 
         // Your map.png dimensions (UPDATE THESE TO MATCH YOUR IMAGE)
@@ -277,9 +277,8 @@
             .on('error', () => alert('Error loading map image! Check path and dimensions'));
         
         // Set the view to center of the map
-   map.fitBounds(bounds, { 
-    padding: [50, 50],  // Optional padding (pixels)
-    maxZoom: 3          // Force a more zoomed-in view
+map.fitBounds(bounds);
+map.setZoom(3); // Start zoomed in (try values between 2-4)
 });
         
         // Click handler for adding markers
