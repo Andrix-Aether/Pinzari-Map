@@ -60,7 +60,7 @@
         #dm-toggle {
             position: absolute;
             top: 10px;
-            left: 100px;
+            left: 10px;
             z-index: 1000;
             padding: 8px 12px;
             background: #333;
@@ -77,12 +77,16 @@
             background: #333;
             padding: 15px;
             border: 1px solid #666;
-            width: 250px;
+            width: 300px;
             display: none;
             color: white;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
-        #dm-form input, #dm-form textarea {
+        #dm-form input, 
+        #dm-form textarea,
+        #dm-form select {
             width: 100%;
             padding: 5px;
             margin: 5px 0;
@@ -114,6 +118,50 @@
             color: black !important;
             font-weight: bold;
         }
+        
+        .ship-icon {
+            font-size: 24px;
+            color: #3498db;
+            text-shadow: 1px 1px 2px black;
+            transform: rotate(-45deg);
+            display: inline-block;
+        }
+        
+        #icon-selector {
+            margin: 10px 0;
+        }
+        
+        #icon-selector label {
+            margin-right: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .characters-section {
+            margin-top: 15px;
+            border-top: 1px solid #555;
+            padding-top: 10px;
+        }
+        
+        .character-tag {
+            display: inline-block;
+            background: #555;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin: 3px;
+            font-size: 0.9em;
+        }
+        
+        #characters-input {
+            width: calc(100% - 60px);
+            display: inline-block;
+        }
+        
+        #add-character-btn {
+            width: 50px;
+            display: inline-block;
+        }
     </style>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
@@ -132,11 +180,35 @@
         <h3>Location Details</h3>
         <input type="text" id="loc-name" placeholder="Location name" required>
         <textarea id="loc-desc" placeholder="Description (optional)" rows="3"></textarea>
+        
+        <div id="icon-selector">
+            <strong>Marker Icon:</strong>
+            <label>
+                <input type="radio" name="icon-type" value="pin" checked> 📍 Pin
+            </label>
+            <label>
+                <input type="radio" name="icon-type" value="star"> ⭐ Star (Quest)
+            </label>
+            <label>
+                <input type="radio" name="icon-type" value="ship"> <span class="ship-icon">⛵</span> Ship
+            </label>
+        </div>
+        
         <div id="quest-section" style="display:none;">
             <h4>Quest Details</h4>
-            <input type="text" id="quest-title" placeholder="Quest title" required>
+            <input type="text" id="quest-title" placeholder="Quest title">
             <textarea id="quest-desc" placeholder="Quest description" rows="2"></textarea>
         </div>
+        
+        <div class="characters-section">
+            <h4>Characters</h4>
+            <div id="characters-list"></div>
+            <div>
+                <input type="text" id="characters-input" placeholder="Add character name">
+                <button id="add-character-btn">Add</button>
+            </div>
+        </div>
+        
         <div>
             <button id="toggle-quest">Add Quest</button>
             <button id="save-btn">Save</button>
@@ -180,6 +252,7 @@
     let tempMarker = null;
     let currentLocationId = null;
     let hasQuest = false;
+    let currentCharacters = [];
 
     // Initialize the map with your custom image
     function initMap() {
@@ -190,7 +263,7 @@
             maxZoom: 2
         });
 
-        // Your map.png dimensions (adjust these to match your image)
+        // Your map.png dimensions (adjust these)
         const mapWidth = 692;
         const mapHeight = 676;
         
@@ -215,13 +288,14 @@
                 
                 // Add new temporary marker
                 tempMarker = L.marker(e.latlng, {
-                    icon: createMarkerIcon(false),
+                    icon: createMarkerIcon('pin'),
                     draggable: true
                 }).addTo(map);
                 
                 // Reset form
                 currentLocationId = null;
                 hasQuest = false;
+                currentCharacters = [];
                 document.getElementById('quest-section').style.display = 'none';
                 document.getElementById('toggle-quest').textContent = 'Add Quest';
                 document.getElementById('toggle-quest').classList.remove('quest-toggle');
@@ -229,6 +303,8 @@
                 document.getElementById('loc-desc').value = '';
                 document.getElementById('quest-title').value = '';
                 document.getElementById('quest-desc').value = '';
+                document.querySelector('input[name="icon-type"][value="pin"]').checked = true;
+                renderCharactersList();
                 
                 // Show the form
                 document.getElementById('dm-form').style.display = 'block';
@@ -238,11 +314,39 @@
     }
 
     // Create appropriate marker icon
-    function createMarkerIcon(hasActiveQuest) {
+    function createMarkerIcon(iconType) {
+        const icons = {
+            pin: { html: '📍', className: 'pin-icon' },
+            star: { html: '⭐', className: 'star-icon' },
+            ship: { html: '⛵', className: 'ship-icon' }
+        };
+        
         return L.divIcon({
-            className: 'marker-icon',
-            html: hasActiveQuest ? '⭐' : '📍',
+            className: icons[iconType].className,
+            html: icons[iconType].html,
             iconSize: [30, 30]
+        });
+    }
+
+    // Render characters list in the form
+    function renderCharactersList() {
+        const container = document.getElementById('characters-list');
+        container.innerHTML = '';
+        
+        if (currentCharacters.length === 0) {
+            container.innerHTML = '<em>No characters</em>';
+            return;
+        }
+        
+        currentCharacters.forEach((char, index) => {
+            const tag = document.createElement('span');
+            tag.className = 'character-tag';
+            tag.textContent = char;
+            tag.onclick = () => {
+                currentCharacters.splice(index, 1);
+                renderCharactersList();
+            };
+            container.appendChild(tag);
         });
     }
 
@@ -262,12 +366,13 @@
                     loc.id = key;
                     locations.push(loc);
                     
-                    // Check if location has active quest
-                    const hasActiveQuest = loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active';
+                    // Determine icon type
+                    const iconType = loc.iconType || 
+                                   (loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active' ? 'star' : 'pin');
                     
                     // Add marker to map
                     const marker = L.marker([loc.lat, loc.lng], {
-                        icon: createMarkerIcon(hasActiveQuest)
+                        icon: createMarkerIcon(iconType)
                     }).addTo(map);
                     
                     // Add popup with location info
@@ -278,6 +383,11 @@
                         const quest = quests[loc.questId];
                         popupContent += `<br><br><strong>Quest:</strong> ${quest.title}`;
                         if (quest.description) popupContent += `<br>${quest.description}`;
+                    }
+                    
+                    if (loc.characters && loc.characters.length > 0) {
+                        popupContent += `<br><br><strong>Characters:</strong><br>`;
+                        popupContent += loc.characters.join(', ');
                     }
                     
                     if (dmMode) {
@@ -322,11 +432,12 @@
         });
     }
 
-    // Update all markers (e.g., when quest status changes)
+    // Update all markers
     function updateMarkers() {
         locations.forEach((loc, index) => {
-            const hasActiveQuest = loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active';
-            markers[index].setIcon(createMarkerIcon(hasActiveQuest));
+            const iconType = loc.iconType || 
+                           (loc.questId && quests[loc.questId] && quests[loc.questId].status === 'active' ? 'star' : 'pin');
+            markers[index].setIcon(createMarkerIcon(iconType));
             
             // Update popup if needed
             if (markers[index].isPopupOpen()) {
@@ -342,6 +453,7 @@
         const desc = document.getElementById('loc-desc').value.trim();
         const questTitle = document.getElementById('quest-title').value.trim();
         const questDesc = document.getElementById('quest-desc').value.trim();
+        const iconType = document.querySelector('input[name="icon-type"]:checked').value;
         
         if (!name) {
             alert('Please enter a location name');
@@ -369,6 +481,8 @@
                     desc: desc,
                     lat: latlng.lat,
                     lng: latlng.lng,
+                    iconType: iconType,
+                    characters: currentCharacters,
                     questId: locations.find(l => l.id === currentLocationId)?.questId || null
                 };
                 
@@ -413,6 +527,8 @@
                     desc: desc,
                     lat: latlng.lat,
                     lng: latlng.lng,
+                    iconType: iconType,
+                    characters: currentCharacters,
                     questId: null
                 };
                 
@@ -449,10 +565,14 @@
         
         currentLocationId = id;
         hasQuest = Boolean(loc.questId);
+        currentCharacters = loc.characters || [];
         
         // Set form values
         document.getElementById('loc-name').value = loc.name;
         document.getElementById('loc-desc').value = loc.desc || '';
+        
+        // Set icon type
+        document.querySelector(`input[name="icon-type"][value="${loc.iconType || 'pin'}"]`).checked = true;
         
         // Set quest values if exists
         if (loc.questId && quests[loc.questId]) {
@@ -470,12 +590,15 @@
             document.getElementById('toggle-quest').classList.remove('quest-toggle');
         }
         
+        // Render characters
+        renderCharactersList();
+        
         // Create temp marker
         if (tempMarker) {
             map.removeLayer(tempMarker);
         }
         tempMarker = L.marker([loc.lat, loc.lng], {
-            icon: createMarkerIcon(hasQuest),
+            icon: createMarkerIcon(loc.iconType || (hasQuest ? 'star' : 'pin')),
             draggable: true
         }).addTo(map);
         
@@ -511,6 +634,19 @@
         }
     }
 
+    // Add character to current location
+    function addCharacter() {
+        const input = document.getElementById('characters-input');
+        const charName = input.value.trim();
+        
+        if (charName && !currentCharacters.includes(charName)) {
+            currentCharacters.push(charName);
+            renderCharactersList();
+            input.value = '';
+            input.focus();
+        }
+    }
+
     // Make functions available globally
     window.editLocation = editLocation;
     window.deleteLocation = deleteLocation;
@@ -536,7 +672,13 @@
                 tempMarker = null;
             }
         });
+        
+        document.getElementById('add-character-btn').addEventListener('click', addCharacter);
+        document.getElementById('characters-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addCharacter();
+        });
     };
 </script>
 </body>
+</html>
 </html>
