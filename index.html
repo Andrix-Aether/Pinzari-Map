@@ -15,37 +15,6 @@
             color: white;
         }
         
-        #quest-log {
-            width: 250px;
-            border-right: 1px solid #444;
-            padding: 10px;
-            overflow-y: auto;
-            background: #333;
-        }
-        
-        #quest-log h2 {
-            margin-top: 0;
-            color: gold;
-        }
-        
-        #quests {
-            margin-top: 10px;
-        }
-        
-        .quest {
-            border: 1px solid #555;
-            border-radius: 4px;
-            padding: 8px;
-            margin-bottom: 8px;
-            background: #444;
-            cursor: pointer;
-        }
-        
-        .quest.active {
-            border-left: 4px solid gold;
-            background: #333;
-        }
-        
         #map-container {
             flex: 1;
             position: relative;
@@ -79,6 +48,55 @@
             color: white;
             border: 1px solid #666;
             cursor: pointer;
+        }
+        
+        #quest-toggle {
+            position: absolute;
+            top: 10px;
+            left: 340px;
+            z-index: 1000;
+            padding: 8px 12px;
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+            cursor: pointer;
+        }
+        
+        #quest-log {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            width: 250px;
+            border: 1px solid #444;
+            padding: 10px;
+            overflow-y: auto;
+            background: #333;
+            display: none;
+            z-index: 1000;
+            max-height: 80vh;
+        }
+        
+        #quest-log h2 {
+            margin-top: 0;
+            color: gold;
+        }
+        
+        #quests {
+            margin-top: 10px;
+        }
+        
+        .quest {
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #444;
+            cursor: pointer;
+        }
+        
+        .quest.active {
+            border-left: 4px solid gold;
+            background: #333;
         }
         
         #dm-form {
@@ -256,14 +274,15 @@
 </head>
 <body>
 
-<div id="quest-log">
-    <h2>Quest Log</h2>
-    <div id="quests"><em>No active quests</em></div>
-</div>
-
 <div id="map-container">
     <button id="dm-toggle">Enable DM Mode</button>
     <button id="journal-toggle">Journal</button>
+    <button id="quest-toggle">Quest Log</button>
+    
+    <div id="quest-log">
+        <h2>Quest Log</h2>
+        <div id="quests"><em>No active quests</em></div>
+    </div>
     
     <div id="dm-form">
         <h3>Location Details</h3>
@@ -861,6 +880,14 @@
             this.textContent = journalMode ? 'Close Journal' : 'Journal';
             this.style.background = journalMode ? '#555' : '#333';
             document.getElementById('journal-container').style.display = journalMode ? 'block' : 'none';
+        });
+        
+        document.getElementById('quest-toggle').addEventListener('click', function() {
+            const questLog = document.getElementById('quest-log');
+            const isVisible = questLog.style.display === 'block';
+            questLog.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? 'Quest Log' : 'Close Quest Log';
+            this.style.background = isVisible ? '#333' : '#555';
         });
         
         document.getElementById('toggle-quest').addEventListener('click', toggleQuest);
